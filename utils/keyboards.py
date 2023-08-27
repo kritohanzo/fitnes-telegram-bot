@@ -15,5 +15,8 @@ admin_buttons.add(KeyboardButton("Разжаловать администрат�
 to_start = ReplyKeyboardMarkup(one_time_keyboard=True)
 to_start.add(KeyboardButton("В главное меню"))
 
-delete_spam_button = InlineKeyboardMarkup()
-delete_spam_button.add(InlineKeyboardButton("Удалить рассылку", callback_data="delete_spam"))
+delete_spam_button_1 = InlineKeyboardMarkup()
+delete_spam_button_1.add(InlineKeyboardButton("Удалить рассылку", callback_data="delete_spam_1"))
+
+delete_spam_button_2 = InlineKeyboardMarkup()
+delete_spam_button_2.add(InlineKeyboardButton("Да, я уверен, что хочу удалить рассылку", callback_data="delete_spam_2"))
