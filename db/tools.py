@@ -1,20 +1,11 @@
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from sqlalchemy import String, Column, Integer, create_engine
+from sqlalchemy.orm import sessionmaker
+from .models import Base
+from sqlalchemy import create_engine
 import os
 
 engine = create_engine("sqlite:///db.sqlite3")
 
-class Base(DeclarativeBase):
-    pass
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    contact = Column(String)
-    telegram_id = Column(Integer)
-
-class Tools:
+class Database:
     session = sessionmaker(autoflush=False, bind=engine)
 
     @classmethod
@@ -34,4 +25,15 @@ class Tools:
             queryset = db.query(model)
             for key, value in kwargs.items():
                 queryset = queryset.filter(getattr(model, key) == value)
+            # queryset = queryset.all()
             return queryset.all()
+            # if len(queryset) > 1:
+            #     return queryset
+            # elif len(queryset) == 1:
+            #     return queryset[0]
+    
+    @classmethod
+    def delete(cls, object):
+        with cls.session(autoflush=False, bind=engine) as db:
+            db.delete(object)
+            db.commit()
