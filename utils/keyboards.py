@@ -4,7 +4,7 @@ kb = ReplyKeyboardMarkup(one_time_keyboard=True)
 kb.add(KeyboardButton("Поделиться номером", request_contact=True))
 
 user_buttons = ReplyKeyboardMarkup(one_time_keyboard=True)
-user_buttons.add(KeyboardButton("Подписаться на рассылку"))
+user_buttons.add(KeyboardButton("Посмотреть рассылки"))
 
 admin_buttons = ReplyKeyboardMarkup(one_time_keyboard=True)
 admin_buttons.add(KeyboardButton("Добавить новую рассылку"))
@@ -20,3 +20,9 @@ delete_spam_button_1.add(InlineKeyboardButton("Удалить рассылку",
 
 delete_spam_button_2 = InlineKeyboardMarkup()
 delete_spam_button_2.add(InlineKeyboardButton("Да, я уверен, что хочу удалить рассылку", callback_data="delete_spam_2"))
+
+subscribe_spam = InlineKeyboardMarkup()
+subscribe_spam.add(InlineKeyboardButton("Подписаться на рассылку", callback_data="subscribe_spam"))
+
+unsubscribe_spam = InlineKeyboardMarkup()
+unsubscribe_spam.add(InlineKeyboardButton("Отписаться от рассылки", callback_data="unsubscribe_spam"))

@@ -8,7 +8,9 @@ class RegistrationState(State):
         return self.contact
 
 class Registation(StatesGroup):
-    intro = RegistrationState()
+    intro = State()
+    add_contact = RegistrationState()
+    add_name = State()
 
 class AdminMenu(StatesGroup):
     intro = State()
@@ -18,4 +20,4 @@ class AdminMenu(StatesGroup):
     delete_administrator = State()
 
 class UserMenu(StatesGroup):
-    pass
+    check_spam = State()

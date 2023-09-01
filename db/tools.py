@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from .models import Base
+from .models import Base, User
 from sqlalchemy import create_engine
 import os
 
@@ -36,4 +36,12 @@ class Database:
     def delete(cls, object):
         with cls.session(autoflush=False, bind=engine) as db:
             db.delete(object)
+            db.commit()
+
+    @classmethod
+    def edit(cls, object, **kwargs):
+        with cls.session(autoflush=False, bind=engine) as db:
+            object = db.query(object.__class__).get(object.id)
+            for key, value in kwargs.items():
+                setattr(object, key, value)
             db.commit()
