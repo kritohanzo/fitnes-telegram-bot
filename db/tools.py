@@ -25,12 +25,7 @@ class Database:
             queryset = db.query(model)
             for key, value in kwargs.items():
                 queryset = queryset.filter(getattr(model, key) == value)
-            # queryset = queryset.all()
             return queryset.all()
-            # if len(queryset) > 1:
-            #     return queryset
-            # elif len(queryset) == 1:
-            #     return queryset[0]
     
     @classmethod
     def delete(cls, object):

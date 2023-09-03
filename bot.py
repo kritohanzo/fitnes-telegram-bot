@@ -9,7 +9,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from db.models import User, Spam, Subscribtions
 from db import Database as db
 from utils.states import Registation, UserMenu, AdminMenu
-from utils.keyboards import kb, user_buttons, admin_buttons, to_start, delete_spam_button_1, delete_spam_button_2, subscribe_spam, unsubscribe_spam
+from utils.keyboards import kb, user_buttons, admin_buttons, to_start, spam_variables, stop_spam_button, delete_spam_button, subscribe_spam, unsubscribe_spam, redirect_to_spam
 
 
 load_dotenv()
@@ -31,7 +31,6 @@ async def start_command(message):
         if spams:
             await UserMenu.check_spam.set()
             user_subscriptions = db.get(Subscribtions, user_id=user[0].id)
-            print(user_subscriptions)
             for spam in spams:
                 for user_subscription in user_subscriptions:
                     if user_subscription.spam_id == spam.id:
@@ -77,7 +76,6 @@ async def return_to_start(message, state):
         await UserMenu.check_spam.set()
         user = db.get(User, telegram_id=message.from_user.id)
         user_subscriptions = db.get(Subscribtions, user_id=user[0].id)
-        print(user_subscriptions)
         for spam in spams:
             for user_subscription in user_subscriptions:
                 if user_subscription.spam_id == spam.id:
@@ -89,20 +87,22 @@ async def return_to_start(message, state):
     else:
         await bot.send_message(message.from_user.id, "Сейчас у нас нет активных рассылок, попробуйте позже", reply_markup=user_buttons)
 
+@dp.message_handler()
+async def error_return_to_start(message):
+    await start_command(message)
+
 @dp.message_handler(state=AdminMenu.intro)
 async def process_admin_menu(message):
     if message.text == "Добавить новую рассылку":
         await AdminMenu.add_spam.set()
         await bot.send_message(message.from_user.id, "Прикрепите картинку и текст к сообщению для создания новой рассылки", reply_markup=to_start)
     
-    elif message.text == "Удалить существующую рассылку":
+    elif message.text == "Посмотреть существующие рассылки":
         spams = db.get(Spam)
         
         if spams:
-            await AdminMenu.delete_spam.set()
             for spam in spams:
-                await bot.send_photo(message.from_user.id, spam.picture_telegram_id, spam.text, reply_markup=delete_spam_button_1)
-            await bot.send_message(message.from_user.id, "Нажмите на кнопочку под какой-то рассылкой, чтобы удалить её навсегда", reply_markup=to_start)
+                await bot.send_photo(message.from_user.id, spam.picture_telegram_id, spam.text, reply_markup=spam_variables)
         else:
             await bot.send_message(message.from_user.id, "Нет активных рассылок", reply_markup=admin_buttons)
 
@@ -127,24 +127,36 @@ async def process_add_spam(message, state):
         db.create(new_spam)
         await AdminMenu.intro.set()
         users = db.get(User, is_admin=False)
-        await bot.send_message(message.from_user.id, "Новая рассылка успешно добавлена", reply_markup=admin_buttons)
+        await bot.send_message(message.from_user.id, "Новая рассылка успешно добавлена, а пользователи осведомлены о ней!", reply_markup=admin_buttons)
         for user in users:
             await bot.send_message(user.telegram_id, "У нас появилась новая рассылка!", reply_markup=user_buttons)
             await bot.send_photo(user.telegram_id, message.photo[-1].file_id, message.caption, reply_markup=subscribe_spam)
 
-@dp.callback_query_handler(lambda c: c.data == "delete_spam_1", state=AdminMenu.delete_spam)
+@dp.callback_query_handler(lambda c: c.data == "delete_spam_1", state=AdminMenu)
 async def process_callback_button1(callback_query, state):
-    await callback_query.message.edit_caption(caption="Вы уверены, что хотите удалить эту рассылку?", reply_markup=delete_spam_button_2)
+    await callback_query.message.edit_reply_markup(reply_markup=delete_spam_button)
 
-@dp.callback_query_handler(lambda c: c.data == "delete_spam_2", state=AdminMenu.delete_spam)
+@dp.callback_query_handler(lambda c: c.data == "delete_spam_2", state=AdminMenu)
 async def process_callback_button2(callback_query, state):
     text = callback_query.message.caption
-    # picture_telegram_id = callback_query.message.photo[-1].file_id
-    # print(picture_telegram_id)
     spam = db.get(Spam, text=text)
-    print(spam)
+
     db.delete(spam[0])
     await callback_query.message.edit_caption(caption="Рассылка успешно удалена")
+
+@dp.callback_query_handler(lambda c: c.data == "stop_spam_1", state=AdminMenu)
+async def process_callback_button1(callback_query, state):
+    await callback_query.message.edit_reply_markup(reply_markup=stop_spam_button)
+
+@dp.callback_query_handler(lambda c: c.data == "stop_spam_2", state=AdminMenu)
+async def process_callback_button2(callback_query, state):
+    text = callback_query.message.caption
+    spam = db.get(Spam, text=text)
+    users_subscriptions = db.get(Subscribtions, spam_id=spam[0].id)
+    for user in users_subscriptions:
+        await bot.send_photo(chat_id=user.telegram_id, photo=spam[0].picture_telegram_id, caption=spam[0].text, reply_markup=redirect_to_spam)
+    db.delete(spam[0])
+    await callback_query.message.edit_caption(caption="Предзапись окончена, пользователи получили уведомление о начале записи.")
 
 @dp.message_handler(state=AdminMenu.add_administrator)
 async def process_add_admin(message, state):
