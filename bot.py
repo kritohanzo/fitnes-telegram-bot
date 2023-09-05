@@ -154,7 +154,7 @@ async def process_callback_button2(callback_query, state):
     spam = db.get(Spam, text=text)
     users_subscriptions = db.get(Subscribtions, spam_id=spam[0].id)
     for user in users_subscriptions:
-        await bot.send_photo(chat_id=user.telegram_id, photo=spam[0].picture_telegram_id, caption=spam[0].text, reply_markup=redirect_to_spam)
+        await bot.send_photo(chat_id=db.get(User, id=user.user_id)[0].telegram_id, photo=spam[0].picture_telegram_id, caption=spam[0].text, reply_markup=redirect_to_spam)
     db.delete(spam[0])
     await callback_query.message.edit_caption(caption="Предзапись окончена, пользователи получили уведомление о начале записи.")
 
